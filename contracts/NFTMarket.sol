@@ -54,7 +54,7 @@ contract NFTMarket is ReentrancyGuard {
 
         _itemIds.increment();
         uint256 itemId = _itemIds.current();  
-        
+
         itemsList[itemId] = MarketItem(
             itemId,
             nftContract,
@@ -70,7 +70,72 @@ contract NFTMarket is ReentrancyGuard {
         emit MarketItemCreated(itemId, nftContract, tokenId, msg.sender, address(0), itemPrice, false);
     }
 
-    function marketSale() public {
+    function fetchMarketItemsNotSold() public view returns (MarketItem[] memory) {
+        uint totalItemCount = _itemIds.current();
+        uint unsoldItemCount = _itemIds.current() - _itemsSold.current();
+        uint index = 0;
+        
+        MarketItem[] memory items = new MarketItem[](unsoldItemCount);
+        for (uint i = 0; i < totalItemCount; i++) {
+            uint currentItemId = itemsList[i + 1].itemId;
+            MarketItem storage currentItem = itemsList[currentItemId];
 
+            if (currentItem.owner == address(0)) {
+                items[index] = currentItem;
+                index += 1;
+            }
+        }
+
+        return items;
+    }
+
+    function fetchOwnNFTs() public view returns (MarketItem[] memory) {
+        uint totalItemCount = _itemIds.current();
+        address ownAddress = msg.sender;
+        uint ownItemCount = 0;
+        uint index = 0;
+
+        for (uint256 i = 0; i < totalItemCount; i++) {
+            if (itemsList[i + 1].owner == ownAddress) {
+                ownItemCount += 1;
+            } 
+        }
+        
+        MarketItem[] memory ownItems = new MarketItem[](ownItemCount);
+        for (uint i = 0; i < totalItemCount; i++) {
+            uint currentItemId = itemsList[i + 1].itemId;
+            MarketItem storage currentItem = itemsList[currentItemId];
+
+            if (currentItem.owner == ownAddress) {
+                ownItems[index] = currentItem;
+                index += 1;
+            }
+        }
+        return ownItems;
+    }
+
+    function fetchOwnCreatedNFTs() public view returns (MarketItem[] memory) {
+        uint totalItemCount = _itemIds.current();
+        address ownAddress = msg.sender;
+        uint ownItemCount = 0;
+        uint index = 0;
+
+        for (uint256 i = 0; i < totalItemCount; i++) {
+            if (itemsList[i + 1].seller == ownAddress) {
+                ownItemCount += 1;
+            } 
+        }
+        
+        MarketItem[] memory createdItems = new MarketItem[](ownItemCount);
+        for (uint i = 0; i < totalItemCount; i++) {
+            uint currentItemId = itemsList[i + 1].itemId;
+            MarketItem storage currentItem = itemsList[currentItemId];
+
+            if (currentItem.seller == ownAddress) {
+                createdItems[index] = currentItem;
+                index += 1;
+            }
+        }
+        return createdItems;
     }
 }
