@@ -65,12 +65,12 @@ contract NFTMarket is ReentrancyGuard {
             false
         );
 
-        IERC721(nftContract).safeTransferFrom(msg.sender, address(this), tokenId); // sends the token from the sender's balance to the market contract balance
+        IERC721(nftContract).transferFrom(msg.sender, address(this), tokenId); // sends the token from the sender's balance to the market contract balance
 
         emit MarketItemCreated(itemId, nftContract, tokenId, msg.sender, address(0), itemPrice, false);
     }
 
-    function sellToken(
+    function tokenSale(
         address nftContract, // "./NFT.sol" contract address
         uint itemId
     ) public payable nonReentrant {
@@ -79,7 +79,7 @@ contract NFTMarket is ReentrancyGuard {
         
         require(msg.value == price, "Price is not correct");
         itemsList[itemId].seller.transfer(msg.value); // the seller receives the payment
-        IERC721(nftContract).safeTransferFrom(address(this), msg.sender, tokenId); // the market balances decrements, the buyer balance increments
+        IERC721(nftContract).transferFrom(address(this), msg.sender, tokenId); // the market balances decrements, the buyer balance increments
         itemsList[itemId].owner = payable(msg.sender); // the token ownership goes to buyer
         itemsList[itemId].sold = true; // set the value to sold
         _itemsSold.increment();
@@ -127,6 +127,7 @@ contract NFTMarket is ReentrancyGuard {
                 index += 1;
             }
         }
+
         return ownItems;
     }
 
