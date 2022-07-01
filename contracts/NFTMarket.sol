@@ -59,7 +59,7 @@ contract NFTMarket is ReentrancyGuard {
             itemId,
             nftContract,
             tokenId,
-            payable(msg.sender),
+            payable(msg.sender), // the seller is the one who lists the item
             payable(address(0)), // no one owns the token for now
             itemPrice,
             false
@@ -68,6 +68,22 @@ contract NFTMarket is ReentrancyGuard {
         IERC721(nftContract).safeTransferFrom(msg.sender, address(this), tokenId); // sends the token from the sender's balance to the market contract balance
 
         emit MarketItemCreated(itemId, nftContract, tokenId, msg.sender, address(0), itemPrice, false);
+    }
+
+    function sellToken(
+        address nftContract, // "./NFT.sol" contract address
+        uint itemId
+    ) public payable nonReentrant {
+        uint price = itemsList[itemId].price;
+        uint tokenId = itemsList[itemId].tokenId;
+        
+        require(msg.value == price, "Price is not correct");
+        itemsList[itemId].seller.transfer(msg.value); // the seller receives the payment
+        IERC721(nftContract).safeTransferFrom(address(this), msg.sender, tokenId); // the market balances decrements, the buyer balance increments
+        itemsList[itemId].owner = payable(msg.sender); // the token ownership goes to buyer
+        itemsList[itemId].sold = true; // set the value to sold
+        _itemsSold.increment();
+        payable(owner).transfer(_listingFee); // the market owner gets paid (on each transaction)
     }
 
     function fetchMarketItemsNotSold() public view returns (MarketItem[] memory) {
